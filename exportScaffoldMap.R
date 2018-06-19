@@ -17,32 +17,20 @@ cytofCore.updateFlowFrameKeywords = function(flowFrame){
     r = paste0("$P",i,"R");
     b = paste0("$P",i,"B");
     e = paste0("$P",i,"E");
-    # v = paste0("$P",i,"V");
-    # g = paste0("$P",i,"G");
-    # d = paste0("P",i,"DISPLAY");
-    # fcmax1 <- paste("flowCore_$P",i,"Rmax",sep="");
-    # fcmin1 <- paste("flowCore_$P",i,"Rmin",sep="");
-    # fcmax <- paste("flowCore_P",i,"Rmax",sep="");
-    # fcmin <- paste("flowCore_P",i,"Rmin",sep="");
     keyval=list();
     label <- pData(flowFrame@parameters)[,"desc"][i]
-    if(is.na(label)) {label <- colnames(flowFrame)[i] }
+    if(is.na(label)) {
+    	label <- colnames(flowFrame)[i]
+    }
     keyval[[n]] = colnames(flowFrame)[i] 
     keyval[[s]] = label       
     keyval[[r]] = ceiling(max(exprs(flowFrame)[,i]))
     keyval[[b]] = 32
     keyval[[e]] = "0,0"
-    # keyval[[v]] <- flowFrame@description[[paste0("$P",i,"V")]]
-    # keyval[[g]] <- flowFrame@description[[paste0("$P",i,"G")]]
-    # keyval[[d]] <- flowFrame@description[[paste0("$P",i,"DISPLAY")]]
-    # keyval[[fcmax1]] <- ceiling(max(exprs(flowFrame)[,i]))
-    # keyval[[fcmin1]] <- ceiling(min(exprs(flowFrame)[,i]))
     keyword(flowFrame) = keyval;
     
     pdata[i,"minRange"]=min(exprs(flowFrame)[,i])
     pdata[i,"maxRange"]=max(exprs(flowFrame)[,i])
-    # pdata[i,"range"]=max(exprs(flowFrame)[,i])
-    # pdata[i,"desc"]=label
     
   }
   pData(params)=pdata
