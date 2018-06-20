@@ -128,9 +128,9 @@ exportScaffoldMap <- function(inputPath=NULL, outputPath=NULL, new.fcs=TRUE, tra
 				row.names(pData(fcs@parameters)) <- paste0("$P",c(1:length(row.names(fcs@parameters))))
 				fcs@description[[paste0("$P",(dim(fcs)[2]-1),"R")]] <- 262144
 				fcs@description[[paste0("$P",(dim(fcs)[2]),"R")]] <- 262144
-				# fcs <- cytofCore.updateFlowFrameKeywords(fcs)	
+
 				print(paste0("Generate new FCS : ",i))
-				write.FCS(fcs, paste0(outputPath,sub(".fcs","",basename(list.fcs[i])),"_celltype.fcs"))
+				write.FCS(fcs, paste0(outputPath,sub(".fcs","",basename(list.fcs[i])),"_celltype.fcs"),delimiter="#")
 			}
 		})
 		print("Generate new FCS Done")
