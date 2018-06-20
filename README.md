@@ -1,4 +1,4 @@
-# spadeToScaffold
+# exportScaffoldMap
 
 Download and unzip master file.
 Copy paste the exportScaffoldMap.R on your desktop.
