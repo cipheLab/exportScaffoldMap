@@ -38,7 +38,11 @@ cytofCore.updateFlowFrameKeywords = function(flowFrame){
   return(flowFrame)
 }
 
-exportScaffoldMap <- function(inputPath=NULL, outputPath=NULL, new.fcs=TRUE, trans.value = 5, new.txt=FALSE, pop.csv=TRUE){
+exportScaffoldMap <- function(inputPath=NULL, outputPath=NULL, trans.value = 5,
+															new.fcs=TRUE, 
+															new.txt=FALSE, 
+															pop.csv=TRUE,
+															cluster.intensity=FALSE){
 
 	if(is.null(outputPath)){outputPath<-inputPath}
 
@@ -185,9 +189,26 @@ exportScaffoldMap <- function(inputPath=NULL, outputPath=NULL, new.fcs=TRUE, tra
 		})
 		print("Generate csv pop DONE.")
 	}
+
+	if(cluster.intensity == TRUE){
+		print("Generate intensity csv file...")
+		lapply(c(1:length(list.fcs)),function(x){
+			print(paste0("Generate intensity csv file : ",x))
+			fcs <- read.FCS(paste0(outputPath,sub(".fcs","",basename(list.fcs[x])),"_celltype.fcs"),emptyValue=FALSE)
+			res <- lapply(unique(fcs@exprs[,"clusterID"]),function(y){
+				mat <- fcs@exprs[which(fcs@exprs[,"clusterID"]==y),]
+				if(dim(mat)[1]< 2 || is.null(dim(mat))){return(c(0,0))}
+				return(c(apply(mat,2,median),dim(mat)[1]))
+			})
+			table <- do.call(rbind, res)
+			colnames(table)[dim(table)[2]] <- "Count"
+			write.csv(table, paste0(outputPath,sub(".fcs","",basename(list.fcs[x])),"_clusterIntensity.csv"))
+		})
+		print("Generate intensity cluster DONE.")
+	}
 }
 
 
-exportScaffoldMap.run <- function(inputPath=dirname(file.choose()),new.fcs=TRUE,new.txt=FALSE){
-	exportScaffoldMap(paste0(normalizePath(inputPath,winslash = "/"),"/"),new.fcs=new.fcs,new.txt=new.txt)
+exportScaffoldMap.run <- function(inputPath=dirname(file.choose()),new.fcs=TRUE,new.txt=FALSE, pop.csv=TRUE, cluster.intensity = FALSE){
+	exportScaffoldMap(paste0(normalizePath(inputPath,winslash = "/"),"/"),new.fcs=new.fcs,new.txt=new.txt,pop.csv=pop.csv,cluster.intensity=cluster.intensity)
 }
