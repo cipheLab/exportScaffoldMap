@@ -1,4 +1,4 @@
-# spadeToScaffold
+# exportScaffoldMap
 
 Copy paste and unzip file in your Desktop
 Open RStudio and run
