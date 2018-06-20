@@ -19,9 +19,7 @@ cytofCore.updateFlowFrameKeywords = function(flowFrame){
     e = paste0("$P",i,"E");
     keyval=list();
     label <- pData(flowFrame@parameters)[,"desc"][i]
-    if(is.na(label)) {
-    	label <- colnames(flowFrame)[i]
-    }
+    if(is.na(label)) {label <- colnames(flowFrame)[i] }
     keyval[[n]] = colnames(flowFrame)[i] 
     keyval[[s]] = label       
     keyval[[r]] = ceiling(max(exprs(flowFrame)[,i]))
@@ -40,7 +38,7 @@ cytofCore.updateFlowFrameKeywords = function(flowFrame){
   return(flowFrame)
 }
 
-exportScaffoldMap <- function(inputPath=NULL, outputPath=NULL, new.fcs=TRUE, trans.value = 5, new.txt=FALSE){
+exportScaffoldMap <- function(inputPath=NULL, outputPath=NULL, new.fcs=TRUE, trans.value = 5, new.txt=FALSE, pop.csv=TRUE){
 
 	if(is.null(outputPath)){outputPath<-inputPath}
 
@@ -123,12 +121,12 @@ exportScaffoldMap <- function(inputPath=NULL, outputPath=NULL, new.fcs=TRUE, tra
 				pop.index <- unlist(lapply(new_col.2,function(j){return(landmark[which(j==landmark[,"pop"]),"popID.Scaffold"])}))
 				tmp <- matrix(landmark[pop.index,"popID.Scaffold"], ncol = 1, dimnames = list(NULL, "popID.Scaffold"))
 
-				fcs <- cbind2(fcs, new_col.1)
-				fcs <- cbind2(fcs, tmp)
+				fcs <- flowCore::cbind2(fcs, new_col.1)
+				fcs <- flowCore::cbind2(fcs, tmp)
 				row.names(pData(fcs@parameters)) <- paste0("$P",c(1:length(row.names(fcs@parameters))))
 				fcs@description[[paste0("$P",(dim(fcs)[2]-1),"R")]] <- 262144
 				fcs@description[[paste0("$P",(dim(fcs)[2]),"R")]] <- 262144
-
+				# fcs <- cytofCore.updateFlowFrameKeywords(fcs)	
 				print(paste0("Generate new FCS : ",i))
 				write.FCS(fcs, paste0(outputPath,sub(".fcs","",basename(list.fcs[i])),"_celltype.fcs"),delimiter="#")
 			}
@@ -139,18 +137,54 @@ exportScaffoldMap <- function(inputPath=NULL, outputPath=NULL, new.fcs=TRUE, tra
 	if(new.txt == TRUE){
 		print("Generate txt file...")
 		lapply(c(1:length(list.fcs)),function(x){
-			print(paste("Generate txt file :",x))
-			fcs <- read.FCS(paste0(outputPath,sub(".fcs","",basename(list.fcs[x])),"_celltype.fcs"),emptyValue=TRUE)
-			asinhTrans <- arcsinhTransform(transformationId="ln-transformation", a=trans.value, b=1, c=1)
-			param <- colnames(fcs)[0:(dim(fcs)[2]-4)]
-			translit <- transformList(param, asinhTrans)
-			fcs <- transform(fcs, translit)
-			mat <- fcs@exprs
-			write.csv(mat, paste0(outputPath,sub(".fcs","",basename(list.fcs[x])),"_transform_cellType.csv"), row.names=FALSE)
+
+			fcs <- read.FCS(list.fcs[x])
+			name <- basename(list.txt[[x]])
+			id <- which(names(data$graphs)==name)
+			if(length(id)==0){
+				return(NULL)
+			} else {
+
+				print(paste("Generate txt file : ",x))
+				fcs <- read.FCS(paste0(outputPath,sub(".fcs","",basename(list.fcs[x])),"_celltype.fcs"),emptyValue=TRUE)
+				asinhTrans <- arcsinhTransform(transformationId="ln-transformation", a=trans.value, b=1, c=1)
+				param <- colnames(fcs)[0:(dim(fcs)[2]-4)]
+				translit <- transformList(param, asinhTrans)
+				fcs <- transform(fcs, translit)
+				mat <- fcs@exprs
+				write.csv(mat, paste0(outputPath,sub(".fcs","",basename(list.fcs[x])),"_transform_cellType.csv"), row.names=FALSE)
+			}
 		})
 		print("Generate txt DONE.")
 	}
 
+	if(pop.csv == TRUE){
+		print("Generate csv pop file...")
+		lapply(c(1:length(list.fcs)),function(x){
+
+			fcs <- read.FCS(list.fcs[x])
+			name <- basename(list.txt[[x]])
+			id <- which(names(data$graphs)==name)
+			if(length(id)==0){
+				return(NULL)
+			} else {
+
+				print(paste0("Generate csv pop file : ",x))
+				fcs <- read.FCS(paste0(outputPath,sub(".fcs","",basename(list.fcs[x])),"_celltype.fcs"),emptyValue=FALSE)
+				rdata <- scaffold:::my_load(list.data[x])
+				res <- lapply(unique(fcs@exprs[,"popID.Scaffold"]),function(y){
+				  print(y)
+					mat <- fcs@exprs[which(fcs@exprs[,"popID.Scaffold"]==y),]
+					if(dim(mat)[1]< 2 || is.null(dim(mat))){return(c(0,0))}
+					return(c(apply(mat,2,mean),dim(mat)[1]))
+				})
+				table <- do.call(rbind, res)
+				colnames(table)[dim(table)[2]] <- "Count"
+				write.csv(table, paste0(outputPath,sub(".fcs","",basename(list.fcs[x])),"_popMFI.csv"))
+			}
+		})
+		print("Generate csv pop DONE.")
+	}
 }
 
 
